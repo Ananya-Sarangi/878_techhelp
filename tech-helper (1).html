@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Echo — Get Help with Technology</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F7F4EF;
+  --surface: #FFFEFB;
+  --green: #2A7A52;
+  --green-light: #E8F4EE;
+  --green-dark: #1A5C3C;
+  --green-mid: #C4DDD0;
+  --text: #1E1B18;
+  --text-soft: #6A6560;
+  --border: #DDD8D0;
+  --shadow: 0 2px 12px rgba(30,27,24,0.08);
+}
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+header {
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+  padding: 16px 24px;
+  display: flex; align-items: center; gap: 16px;
+  position: sticky; top: 0; z-index: 10;
+  box-shadow: 0 1px 8px rgba(30,27,24,0.06);
+}
+.logo {
+  width: 48px; height: 48px; background: var(--green);
+  border-radius: 14px; display: flex; align-items: center;
+  justify-content: center; font-size: 24px; flex-shrink: 0;
+}
+.header-text h1 { font-family: 'Lora', serif; font-size: 22px; font-weight: 600; }
+.header-text p { font-size: 14px; color: var(--text-soft); margin-top: 2px; }
+main {
+  flex: 1; display: flex; flex-direction: column;
+  max-width: 760px; width: 100%;
+  margin: 0 auto; padding: 24px 16px 0;
+}
+.welcome {
+  background: var(--green-light);
+  border: 1.5px solid var(--green-mid);
+  border-radius: 20px; padding: 24px 28px;
+  margin-bottom: 24px;
+  animation: fadeUp 0.5s ease both;
+}
+.welcome h2 { font-family: 'Lora', serif; font-size: 20px; font-weight: 600; color: var(--green-dark); margin-bottom: 10px; }
+.welcome p { font-size: 17px; color: #2E5E45; line-height: 1.65; }
+.steps { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+.step-pill {
+  background: white; border: 1.5px solid var(--green-mid);
+  border-radius: 100px; padding: 8px 16px;
+  font-size: 15px; color: var(--green-dark); font-weight: 600;
+  display: flex; align-items: center; gap: 8px;
+}
+.messages {
+  display: flex; flex-direction: column;
+  gap: 16px; padding-bottom: 20px;
+}
+.bubble-row {
+  display: flex; align-items: flex-end; gap: 10px;
+  animation: fadeUp 0.35s ease both;
+}
+.bubble-row.user { flex-direction: row-reverse; }
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  flex-shrink: 0; display: flex; align-items: center;
+  justify-content: center; font-size: 18px;
+}
+.avatar.ai { background: var(--green-light); border: 1.5px solid var(--green-mid); }
+.avatar.user-av { background: var(--green); }
+.bubble {
+  max-width: 82%; padding: 16px 20px;
+  border-radius: 20px; font-size: 17px; line-height: 1.65;
+}
+.bubble.ai {
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-bottom-left-radius: 6px; color: var(--text); box-shadow: var(--shadow);
+}
+.bubble.user {
+  background: var(--green); color: white; border-bottom-right-radius: 6px;
+}
+.photo-in-bubble {
+  border-radius: 12px; overflow: hidden;
+  border: 2px solid rgba(255,255,255,0.3);
+  max-width: 240px; margin-bottom: 10px;
+}
+.photo-in-bubble img { width: 100%; display: block; }
+.result-card {
+  background: var(--surface); border: 2px solid var(--green);
+  border-radius: 20px; padding: 24px 28px;
+  margin: 4px 0 0 46px;
+  animation: fadeUp 0.4s ease both;
+}
+.result-card h3 {
+  font-family: 'Lora', serif; font-size: 17px; color: var(--green-dark);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+}
+.message-text {
+  font-size: 17px; line-height: 1.75; color: var(--text);
+  white-space: pre-wrap; background: var(--green-light);
+  border-radius: 12px; padding: 18px 20px; border: 1px solid var(--green-mid);
+}
+.copy-btn {
+  margin-top: 14px; background: var(--green); color: white; border: none;
+  border-radius: 12px; padding: 13px 24px; font-size: 16px;
+  font-family: 'Nunito', sans-serif; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; gap: 8px;
+  transition: background 0.2s, transform 0.1s;
+}
+.copy-btn:hover { background: var(--green-dark); transform: translateY(-1px); }
+.typing {
+  display: flex; align-items: center; gap: 5px;
+  padding: 16px 20px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 20px;
+  border-bottom-left-radius: 6px; width: fit-content; box-shadow: var(--shadow);
+}
+.dot {
+  width: 8px; height: 8px; background: var(--green);
+  border-radius: 50%; animation: bounce 1.2s infinite;
+}
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+.input-area {
+  position: sticky; bottom: 0; background: var(--bg);
+  padding: 16px 0 24px; border-top: 1.5px solid var(--border);
+}
+.input-toolbar { display: flex; gap: 10px; margin-bottom: 12px; }
+.toolbar-btn {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: 11px 18px; font-size: 15px;
+  font-family: 'Nunito', sans-serif; font-weight: 600;
+  color: var(--text); cursor: pointer;
+  transition: border-color 0.2s, background 0.2s; white-space: nowrap;
+}
+.toolbar-btn:hover { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+.toolbar-btn.active { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
+#photo-input { display: none; }
+.voice-bar {
+  display: none; align-items: center; gap: 12px;
+  background: #FFF3F3; border: 1.5px solid #E8BCBC;
+  border-radius: 16px; padding: 13px 18px; margin-bottom: 12px;
+  font-size: 16px; color: #C0392B; font-weight: 600;
+}
+.voice-bar.active { display: flex; }
+.pulse-dot {
+  width: 12px; height: 12px; background: #E74C3C;
+  border-radius: 50%; animation: pulse 1s infinite; flex-shrink: 0;
+}
+.stop-btn {
+  margin-left: auto; background: #E74C3C; color: white;
+  border: none; border-radius: 10px; padding: 8px 16px;
+  font-size: 14px; font-family: 'Nunito', sans-serif; font-weight: 700; cursor: pointer;
+}
+.photo-pending {
+  display: none; align-items: center; gap: 12px;
+  background: var(--green-light); border: 1.5px solid var(--green-mid);
+  border-radius: 12px; padding: 12px 16px; margin-bottom: 12px;
+  font-size: 15px; color: var(--green-dark); font-weight: 600;
+}
+.photo-pending img {
+  width: 48px; height: 48px; object-fit: cover;
+  border-radius: 8px; border: 1px solid var(--green-mid);
+}
+.remove-photo {
+  margin-left: auto; background: none; border: none;
+  font-size: 20px; cursor: pointer; color: var(--text-soft);
+  padding: 2px 6px; border-radius: 6px;
+}
+.remove-photo:hover { background: var(--border); }
+.input-row { display: flex; gap: 10px; align-items: flex-end; }
+textarea#user-input {
+  flex: 1; font-family: 'Nunito', sans-serif; font-size: 17px;
+  line-height: 1.55; padding: 14px 18px; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 16px; resize: none;
+  outline: none; color: var(--text); min-height: 56px; max-height: 140px;
+  overflow-y: auto; transition: border-color 0.2s;
+}
+textarea#user-input:focus { border-color: var(--green); }
+textarea#user-input::placeholder { color: var(--text-soft); }
+.send-btn {
+  width: 56px; height: 56px; background: var(--green); border: none;
+  border-radius: 16px; color: white; font-size: 22px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: background 0.2s, transform 0.1s;
+}
+.send-btn:hover { background: var(--green-dark); transform: translateY(-1px); }
+.send-btn:active { transform: translateY(0); }
+.send-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(0.85); }
+}
+@media (max-width: 500px) {
+  .welcome { padding: 18px; }
+  .bubble { font-size: 16px; }
+  textarea#user-input { font-size: 16px; }
+  .result-card { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🤝</div>
+  <div class="header-text">
+    <h1>Echo</h1>
+    <p>We'll help you explain your technology problem</p>
+  </div>
+</header>
+
+<main>
+  <div class="welcome" id="welcome-banner">
+    <h2>👋 Hello! Having trouble with your technology?</h2>
+    <p>I'll ask you a few simple questions, then write a short message you can send to a family member or help desk — so they know exactly what's wrong.</p>
+    <div class="steps">
+      <div class="step-pill"><span>📷</span> Add a photo</div>
+      <div class="step-pill"><span>🎤</span> Speak your problem</div>
+      <div class="step-pill"><span>✍️</span> Or just type</div>
+    </div>
+  </div>
+
+  <div class="messages" id="messages"></div>
+
+  <div class="input-area">
+    <div class="voice-bar" id="voice-bar">
+      <div class="pulse-dot"></div>
+      <span>Listening — speak your problem</span>
+      <button class="stop-btn" onclick="stopVoice()">Done</button>
+    </div>
+    <div class="photo-pending" id="photo-pending">
+      <img id="photo-thumb" src="" alt="Your photo">
+      <span>Photo ready to send</span>
+      <button class="remove-photo" onclick="removePhoto()">✕</button>
+    </div>
+    <div class="input-toolbar">
+      <button class="toolbar-btn" onclick="document.getElementById('photo-input').click()">
+        <span>📷</span> Add a Photo
+      </button>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="handlePhoto(event)">
+      <button class="toolbar-btn" id="voice-btn" onclick="toggleVoice()">
+        <span>🎤</span> Speak
+      </button>
+    </div>
+    <div class="input-row">
+      <textarea id="user-input" placeholder="Describe what happened..." rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+</main>
+
+<script>
+const SYSTEM_PROMPT = `You are Echo, a warm and patient assistant. You help older adults describe a technology problem so they can ask someone for help.
+
+Keep everything simple. Never use technical words.
+
+STEP 1 — LEARN WHAT HAPPENED
+Ask only one question at a time. You need to find out:
+- What were they trying to do?
+- What device were they using? (phone, laptop, printer, etc.)
+- What happened instead?
+- What does the screen look like right now?
+
+RECOGNITION OVER RECALL — always ask questions this way:
+- Never ask "what did it say?" — instead ask "did it say something like 'no internet', 'wrong password', or something else?"
+- Never ask "what happened?" — instead ask "did it do something like: freeze, go blank, show a message, or make a noise?"
+- Always give 2–3 concrete examples so they can point to the right one rather than describe from memory
+- Ask about what they can see RIGHT NOW on their screen, not what they remember from before
+
+HANDLING UNCERTAINTY — if they say "I think", "maybe", "I'm not sure", or seem hesitant:
+- Do not move forward with an assumption
+- Stop and offer concrete options: "No problem — does it look more like: a blank screen, an error message, or is it frozen?"
+- Always make it easy to say "none of those" too
+
+If they share a photo, describe what you see in plain words first, then ask: "Is this the problem you're having?"
+
+STEP 2 — WRITE THE HELP MESSAGE
+Once you know enough, write this message for them — surrounded by the tags exactly as shown:
+
+<HELPMESSAGE>
+Hi! I need some help with my [device].
+
+I was trying to: [what they wanted to do]
+What happened: [what went wrong, in plain words]
+What I see now: [what's on the screen, in their words]
+
+Thank you!
+</HELPMESSAGE>
+
+Keep the message under 100 words. Use the simplest words possible.
+
+RULES:
+- Never use: restart, reboot, browser, driver, network, connectivity, cache, configure, OS, firmware, RAM, CPU, DNS, interface
+- Say instead: "turn it off and back on", "the internet", "the app", "the screen"
+- Never make the user sound like a tech expert
+- If an error message is visible in a photo or described, copy it exactly as written
+- Ask one simple follow-up if something is unclear
+- After showing the message, ask: "Does this sound right, or should I change anything?"
+
+TONE: Warm, calm, and encouraging. Never make them feel silly or slow. If frustrated: "That sounds frustrating — let's work through it together."`;
+
+let history = [];
+let pendingPhoto = null;
+let pendingMime = null;
+let recognition = null;
+let isRecording = false;
+
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => addAIMessage("Hello! 😊 I'm Echo.\n\nWhat were you trying to do when the trouble started?"), 500);
+});
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+function scrollDown() {
+  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
+}
+function esc(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function addUserMessage(text, photoDataUrl) {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'bubble-row user';
+  let inner = '';
+  if (photoDataUrl) inner += `<div class="photo-in-bubble"><img src="${photoDataUrl}" alt="Your photo"></div>`;
+  if (text) inner += `<div>${esc(text).replace(/\n/g,'<br>')}</div>`;
+  row.innerHTML = `<div class="avatar user-av">🧑</div><div class="bubble user">${inner}</div>`;
+  msgs.appendChild(row);
+  document.getElementById('welcome-banner').style.display = 'none';
+  scrollDown();
+}
+
+function addAIMessage(text) {
+  const msgs = document.getElementById('messages');
+  const helpMatch = text.match(/<HELPMESSAGE>([\s\S]*?)<\/HELPMESSAGE>/);
+  const clean = text.replace(/<HELPMESSAGE>[\s\S]*?<\/HELPMESSAGE>/g, '').trim();
+
+  if (clean) {
+    const row = document.createElement('div');
+    row.className = 'bubble-row';
+    row.innerHTML = `<div class="avatar ai">🤝</div><div class="bubble ai">${esc(clean).replace(/\n/g,'<br>')}</div>`;
+    msgs.appendChild(row);
+  }
+
+  if (helpMatch) {
+    const card = document.createElement('div');
+    card.className = 'result-card';
+    card.innerHTML = `
+      <h3>✅ Your help message is ready!</h3>
+      <div class="message-text" id="help-msg">${esc(helpMatch[1].trim())}</div>
+      <button class="copy-btn" onclick="copyMsg(this)"><span>📋</span> Copy this message</button>`;
+    msgs.appendChild(card);
+  }
+  scrollDown();
+}
+
+function showTyping() {
+  const msgs = document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'bubble-row'; row.id = 'typing';
+  row.innerHTML = `<div class="avatar ai">🤝</div><div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
+  msgs.appendChild(row);
+  scrollDown();
+}
+function removeTyping() { const t = document.getElementById('typing'); if (t) t.remove(); }
+
+async function sendMessage() {
+  const input = document.getElementById('user-input');
+  const text = input.value.trim();
+  if (!text && !pendingPhoto) return;
+
+  const photoUrl = pendingPhoto ? `data:${pendingMime};base64,${pendingPhoto}` : null;
+  addUserMessage(text, photoUrl);
+
+  let userContent = pendingPhoto
+    ? [{ type: 'image', source: { type: 'base64', media_type: pendingMime, data: pendingPhoto } },
+       { type: 'text', text: text || 'I uploaded a photo of my problem.' }]
+    : text;
+
+  history.push({ role: 'user', content: userContent });
+  input.value = ''; input.style.height = 'auto';
+  removePhoto();
+  document.getElementById('send-btn').disabled = true;
+  showTyping();
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT,
+        messages: history
+      })
+    });
+    const data = await res.json();
+    removeTyping();
+    const aiText = data.content?.map(b => b.text || '').join('') || "Something went wrong. Please try again.";
+    history.push({ role: 'assistant', content: aiText });
+    addAIMessage(aiText);
+  } catch {
+    removeTyping();
+    addAIMessage("I couldn't connect right now. Please check your internet and try again.");
+  }
+  document.getElementById('send-btn').disabled = false;
+}
+
+function handlePhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const full = ev.target.result;
+    pendingPhoto = full.split(',')[1];
+    pendingMime = file.type;
+    document.getElementById('photo-thumb').src = full;
+    document.getElementById('photo-pending').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+function removePhoto() {
+  pendingPhoto = null; pendingMime = null;
+  document.getElementById('photo-pending').style.display = 'none';
+  document.getElementById('photo-thumb').src = '';
+}
+
+function copyMsg(btn) {
+  const el = document.getElementById('help-msg');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    btn.innerHTML = '<span>✅</span> Copied!';
+    setTimeout(() => { btn.innerHTML = '<span>📋</span> Copy this message'; }, 2500);
+  });
+}
+
+function toggleVoice() {
+  if (isRecording) { stopVoice(); return; }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert("Voice isn't supported in this browser. Please type your problem instead."); return; }
+  recognition = new SR();
+  recognition.continuous = true; recognition.interimResults = true; recognition.lang = 'en-US';
+  let final = '';
+  recognition.onresult = e => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    const ta = document.getElementById('user-input');
+    ta.value = final + interim; autoResize(ta);
+  };
+  recognition.onerror = stopVoice;
+  recognition.onend = () => { if (isRecording) stopVoice(); };
+  recognition.start();
+  isRecording = true;
+  document.getElementById('voice-bar').classList.add('active');
+  document.getElementById('voice-btn').classList.add('active');
+  document.getElementById('voice-btn').innerHTML = '<span>⏹</span> Stop';
+}
+
+function stopVoice() {
+  if (recognition) { recognition.stop(); recognition = null; }
+  isRecording = false;
+  document.getElementById('voice-bar').classList.remove('active');
+  document.getElementById('voice-btn').classList.remove('active');
+  document.getElementById('voice-btn').innerHTML = '<span>🎤</span> Speak';
+}
+</script>
+</body>
+</html>
