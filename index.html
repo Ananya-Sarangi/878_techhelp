@@ -426,7 +426,7 @@ async function sendMessage() {
             : { type: 'text', text: p.text })
         : m.parts.map(p => p.text).join('')
     }));
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://corsproxy.io/?https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
