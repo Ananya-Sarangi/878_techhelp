@@ -243,7 +243,7 @@ textarea#user-input::placeholder { color: var(--text-soft); }
   <div class="input-area">
     <div class="voice-bar" id="voice-bar">
       <div class="pulse-dot"></div>
-      <span>Listening — speak your problem</span>
+      <span id="voice-status">Listening — speak your problem</span>
       <button class="stop-btn" onclick="stopVoice()">Done</button>
     </div>
     <div class="photo-pending" id="photo-pending">
@@ -426,29 +426,24 @@ async function sendMessage() {
             : { type: 'text', text: p.text })
         : m.parts.map(p => p.text).join('')
     }));
-    const res = await fetch('https://corsproxy.io/?https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer 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'
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'gpt-4o',
-        max_tokens: 1000,
-        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...openaiHistory]
+        system: SYSTEM_PROMPT,
+        messages: openaiHistory
       })
     });
     const data = await res.json();
     removeTyping();
-    console.log('OpenAI response:', JSON.stringify(data));
     let aiText;
-    if (data.choices?.[0]?.message?.content) {
-      aiText = data.choices[0].message.content;
+    if (data.reply) {
+      aiText = data.reply;
     } else if (data.error) {
-      const code = data.error.code || data.error.type || '';
-      if (code === 'invalid_api_key' || code === 'authentication_error') {
+      const code = data.error || '';
+      if (code.includes('auth') || code.includes('key')) {
         aiText = "⚠️ There's a problem with the connection key. Please let the person who set this up know.";
-      } else if (code === 'rate_limit_exceeded') {
+      } else if (code.includes('rate')) {
         aiText = "⚠️ Echo is getting too many requests right now. Please wait a minute and try again.";
       } else {
         aiText = "⚠️ Something went wrong. Please try again in a moment.";
