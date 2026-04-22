@@ -273,28 +273,39 @@ const SYSTEM_PROMPT = `You are Echo, a warm and patient assistant. You help olde
 
 Keep everything simple. Never use technical words.
 
-STEP 1 — LEARN WHAT HAPPENED
-Ask only one question at a time. You need to find out:
-- What were they trying to do?
-- What device were they using? (phone, laptop, printer, etc.)
-- What happened instead?
-- What does the screen look like right now?
+YOUR GOAL
+Collect these four things before writing the help message:
+1. What they were trying to do
+2. What device they were using
+3. What went wrong
+4. What the screen looks like right now
 
-RECOGNITION OVER RECALL — always ask questions this way:
-- Never ask "what did it say?" — instead ask "did it say something like 'no internet', 'wrong password', or something else?"
-- Never ask "what happened?" — instead ask "did it do something like: freeze, go blank, show a message, or make a noise?"
-- Always give 2–3 concrete examples so they can point to the right one rather than describe from memory
-- Ask about what they can see RIGHT NOW on their screen, not what they remember from before
+HOW TO COLLECT THEM
+- When the user first speaks, carefully note which of the four things they have already answered
+- Never ask about something they have already told you — not even to confirm it
+- Only ask about what is genuinely still missing
+- If two things are still missing, ask one natural question that gets both at once
+- If only one thing is missing, ask one short focused question to get it
+- If all four are covered in their first message, skip straight to writing the help message
 
-HANDLING UNCERTAINTY — if they say "I think", "maybe", "I'm not sure", or seem hesitant:
+ASK THIS WAY — recognition over recall:
+- Never ask open questions like "what happened?" — instead offer options: "did it freeze, go blank, show a message, or something else?"
+- Never ask "what did it say?" — instead ask "did it show something like 'no internet', 'wrong password', or a different message?"
+- Always anchor to what they can see RIGHT NOW on the screen, not what they remember
+- Give 2–3 concrete examples so they can point rather than describe from memory
+
+HANDLING UNCERTAINTY — if they say "I think", "maybe", or "I'm not sure":
 - Do not move forward with an assumption
-- Stop and offer concrete options: "No problem — does it look more like: a blank screen, an error message, or is it frozen?"
-- Always make it easy to say "none of those" too
+- Offer 2–3 concrete options: "No problem — does it look more like: a blank screen, an error message, or is it frozen?"
+- Always make it easy to say "none of those"
 
-If they share a photo, describe what you see in plain words first, then ask: "Is this the problem you're having?"
+IF THEY SHARE A PHOTO:
+- Describe what you see in plain words first
+- Ask: "Is this the problem you're having?"
+- Extract any visible error text and use it word for word in the help message
 
 STEP 2 — WRITE THE HELP MESSAGE
-Once you know enough, write this message for them — surrounded by the tags exactly as shown:
+Once you have all four things, write this — surrounded by the tags exactly as shown:
 
 <HELPMESSAGE>
 Hi! I need some help with my [device].
@@ -312,8 +323,7 @@ RULES:
 - Never use: restart, reboot, browser, driver, network, connectivity, cache, configure, OS, firmware, RAM, CPU, DNS, interface
 - Say instead: "turn it off and back on", "the internet", "the app", "the screen"
 - Never make the user sound like a tech expert
-- If an error message is visible in a photo or described, copy it exactly as written
-- Ask one simple follow-up if something is unclear
+- If an error message is visible or described, copy it exactly as written
 - After showing the message, ask: "Does this sound right, or should I change anything?"
 
 TONE: Warm, calm, and encouraging. Never make them feel silly or slow. If frustrated: "That sounds frustrating — let's work through it together."`;
@@ -397,36 +407,65 @@ async function sendMessage() {
   const photoUrl = pendingPhoto ? `data:${pendingMime};base64,${pendingPhoto}` : null;
   addUserMessage(text, photoUrl);
 
-  let userContent = pendingPhoto
-    ? [{ type: 'image', source: { type: 'base64', media_type: pendingMime, data: pendingPhoto } },
-       { type: 'text', text: text || 'I uploaded a photo of my problem.' }]
-    : text;
+  let parts = [];
+  if (pendingPhoto) parts.push({ inline_data: { mime_type: pendingMime, data: pendingPhoto } });
+  parts.push({ text: text || 'I uploaded a photo of my problem.' });
+  history.push({ role: 'user', parts });
 
-  history.push({ role: 'user', content: userContent });
   input.value = ''; input.style.height = 'auto';
   removePhoto();
   document.getElementById('send-btn').disabled = true;
   showTyping();
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const openaiHistory = history.map(m => ({
+      role: m.role === 'model' ? 'assistant' : 'user',
+      content: m.parts.some(p => p.inline_data)
+        ? m.parts.map(p => p.inline_data
+            ? { type: 'image_url', image_url: { url: `data:${p.inline_data.mime_type};base64,${p.inline_data.data}` } }
+            : { type: 'text', text: p.text })
+        : m.parts.map(p => p.text).join('')
+    }));
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer sk-proj-8suI9zOibbmOj0YTHS_LlfHWLJwxVqDxu3OXoJFy1BKdNpzP574wA6pltNR6G3f26MpVP7Bcy9T3BlbkFJAnon2V61n_oKvrGOnO5D4JI1vtK_ONVxsLwnY81hfeYV_o32OnwSJ5t838B-WiN4y6R4Kjt4vbJU8A'
+      },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'gpt-4o',
         max_tokens: 1000,
-        system: SYSTEM_PROMPT,
-        messages: history
+        messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...openaiHistory]
       })
     });
     const data = await res.json();
     removeTyping();
-    const aiText = data.content?.map(b => b.text || '').join('') || "Something went wrong. Please try again.";
-    history.push({ role: 'assistant', content: aiText });
+    console.log('OpenAI response:', JSON.stringify(data));
+    let aiText;
+    if (data.choices?.[0]?.message?.content) {
+      aiText = data.choices[0].message.content;
+    } else if (data.error) {
+      const code = data.error.code || data.error.type || '';
+      if (code === 'invalid_api_key' || code === 'authentication_error') {
+        aiText = "⚠️ There's a problem with the connection key. Please let the person who set this up know.";
+      } else if (code === 'rate_limit_exceeded') {
+        aiText = "⚠️ Echo is getting too many requests right now. Please wait a minute and try again.";
+      } else {
+        aiText = "⚠️ Something went wrong. Please try again in a moment.";
+      }
+    } else {
+      aiText = "⚠️ Echo didn't get a response. Please try again.";
+    }
+    history.push({ role: 'model', parts: [{ text: aiText }] });
     addAIMessage(aiText);
-  } catch {
+  } catch (err) {
     removeTyping();
-    addAIMessage("I couldn't connect right now. Please check your internet and try again.");
+    console.log('Network error:', err);
+    if (!navigator.onLine) {
+      addAIMessage("⚠️ It looks like your internet is not connected. Please check your wifi or internet connection and try again.");
+    } else {
+      addAIMessage("⚠️ Echo couldn't connect just now. Please check your internet connection and try again. If your internet is working, wait a moment and try once more.");
+    }
   }
   document.getElementById('send-btn').disabled = false;
 }
@@ -466,9 +505,14 @@ function toggleVoice() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) { alert("Voice isn't supported in this browser. Please type your problem instead."); return; }
   recognition = new SR();
-  recognition.continuous = true; recognition.interimResults = true; recognition.lang = 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
   let final = '';
+  let silenceTimer = null;
+
   recognition.onresult = e => {
+    clearTimeout(silenceTimer);
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
@@ -476,14 +520,34 @@ function toggleVoice() {
     }
     const ta = document.getElementById('user-input');
     ta.value = final + interim; autoResize(ta);
+    document.getElementById('voice-status').textContent = 'Listening — speak your problem';
+    silenceTimer = setTimeout(() => {
+      if (isRecording) {
+        document.getElementById('voice-status').textContent = 'Got it — sending...';
+        stopVoice();
+        setTimeout(() => sendMessage(), 400);
+      }
+    }, 3500);
   };
-  recognition.onerror = stopVoice;
+
+  recognition.onspeechstart = () => {
+    document.getElementById('voice-status').textContent = 'Listening — keep going...';
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'no-speech') {
+      document.getElementById('voice-status').textContent = 'No speech heard — try again';
+      setTimeout(stopVoice, 1200);
+    } else { stopVoice(); }
+  };
+
   recognition.onend = () => { if (isRecording) stopVoice(); };
   recognition.start();
   isRecording = true;
   document.getElementById('voice-bar').classList.add('active');
   document.getElementById('voice-btn').classList.add('active');
   document.getElementById('voice-btn').innerHTML = '<span>⏹</span> Stop';
+  document.getElementById('voice-status').textContent = 'Listening — speak your problem';
 }
 
 function stopVoice() {
@@ -492,6 +556,7 @@ function stopVoice() {
   document.getElementById('voice-bar').classList.remove('active');
   document.getElementById('voice-btn').classList.remove('active');
   document.getElementById('voice-btn').innerHTML = '<span>🎤</span> Speak';
+  document.getElementById('voice-status').textContent = 'Listening — speak your problem';
 }
 </script>
 </body>
